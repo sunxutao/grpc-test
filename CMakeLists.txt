@@ -11,7 +11,7 @@ set(CMAKE_MODULE_PATH
 
 option(ROUTE  "Compile route guide case" OFF)
 
-set(INCLUDE_DIRS "${CMAKE_HOME_DIRECTORY}/include")
+set(INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/include")
 
 # set up the install path of thirdparty packages
 set(INSTALL_PATH "$ENV{HOME}/local" CACHE PATH "install path of thirdparty modules")
@@ -43,38 +43,9 @@ endif ()
 set(CMAKE_CXX_FLAGS 
   "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -pthread -Wall -Wno-unused-function")
 
-# Proto file
-if (ROUTE)
-  get_filename_component(hw_proto "${CMAKE_CURRENT_SOURCE_DIR}/protos/route_guide.proto" ABSOLUTE)
-else ()
-  get_filename_component(hw_proto "${CMAKE_CURRENT_SOURCE_DIR}/protos/helloworld.proto" ABSOLUTE)
-endif ()
-get_filename_component(hw_proto_path "${hw_proto}" PATH)
+# Include generated *.pb.h files
+include_directories(${INCLUDE_DIRS})
 
-# Generated sources
-execute_process(COMMAND mkdir -p "${CMAKE_CURRENT_BINARY_DIR}/protobuf_output")
-set(GRPC_GENERATED "${CMAKE_CURRENT_BINARY_DIR}/protobuf_output")
-if (ROUTE)
-  set(hw_proto_srcs "${GRPC_GENERATED}/route_guide.pb.cc")
-  set(hw_proto_hdrs "${GRPC_GENERATED}/route_guide.pb.h")
-  set(hw_grpc_srcs "${GRPC_GENERATED}/route_guide.grpc.pb.cc")
-  set(hw_grpc_hdrs "${GRPC_GENERATED}/route_guide.grpc.pb.h")
-else ()
-  set(hw_proto_srcs "${GRPC_GENERATED}/helloworld.pb.cc")
-  set(hw_proto_hdrs "${GRPC_GENERATED}/helloworld.pb.h")
-  set(hw_grpc_srcs "${GRPC_GENERATED}/helloworld.grpc.pb.cc")
-  set(hw_grpc_hdrs "${GRPC_GENERATED}/helloworld.grpc.pb.h")
-endif ()
-add_custom_command(
-  OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}" "${hw_grpc_srcs}" "${hw_grpc_hdrs}"
-  COMMAND "${_PROTOBUF_PROTOC}"
-  ARGS --grpc_out "${GRPC_GENERATED}"
-    --cpp_out "${GRPC_GENERATED}"
-    -I "${hw_proto_path}"
-    --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
-    "${hw_proto}"
-  DEPENDS "${hw_proto}"
-)
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
-add_subdirectory(client)
-add_subdirectory(server)
+add_subdirectory(src)
